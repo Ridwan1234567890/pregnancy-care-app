@@ -1,0 +1,95 @@
+/*
+ * FILE GUIDE: Global styles and Tailwind CSS directives. CSS comments use slash-star syntax.
+ * Learning note: CSS controls appearance; it does not itself implement React state or event logic.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+  html { box-sizing: border-box; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body { margin: 0; padding: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  img { max-width: 100%; }
+  [hidden]:not([hidden=until-found i]) { display: none !important; }
+  :root {
+    --bg: #FFFFFF;
+    --hdr: rgba(255,255,255,.88); --surface: #F8F6FA; --ink: #1F1630; --muted: #6A6377; --line: #E8E3EE;
+    --brand: #8A35AE; --brandink: #FFFFFF; --grad: linear-gradient(135deg, #8F3FBF 0%, #D63F7A 100%);
+    --accent: #C2306A; --soft: rgba(138,53,174,.09);
+    --warn: #8A5200; --warnbg: #FBEFD6; --ok: #1B6E40; --okbg: #DCF0E3; --shadow: 0 6px 24px rgba(40,20,70,.06);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E0D10;
+      --hdr: rgba(14,13,16,.88); --surface: #1A181E; --ink: #F4F1F7; --muted: #A9A3B3; --line: rgba(255,255,255,.12);
+      --brand: #D39CF0; --brandink: #1A1038; --grad: linear-gradient(135deg, #C78BEA 0%, #FF8FB1 100%);
+      --accent: #FF86AB; --soft: rgba(211,156,240,.14);
+      --warn: #F0C070; --warnbg: rgba(240,192,112,.16); --ok: #7FD9A0; --okbg: rgba(127,217,160,.14); --shadow: none;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E0D10;
+    --hdr: rgba(14,13,16,.88); --surface: #1A181E; --ink: #F4F1F7; --muted: #A9A3B3; --line: rgba(255,255,255,.12);
+    --brand: #D39CF0; --brandink: #1A1038; --grad: linear-gradient(135deg, #C78BEA 0%, #FF8FB1 100%);
+    --accent: #FF86AB; --soft: rgba(211,156,240,.14);
+    --warn: #F0C070; --warnbg: rgba(240,192,112,.16); --ok: #7FD9A0; --okbg: rgba(127,217,160,.14); --shadow: none;
+    color-scheme: dark;
+  }
+  body { background-color: var(--bg); color: var(--ink); font-family: Figtree, system-ui, sans-serif; font-size: 15px; }
+  .gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .hdr { position: sticky; top: 0; z-index: 20; background: var(--hdr); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .glass { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .btn-grad { background: var(--grad); }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* ---------- motion ---------- */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-10px); } }
+  @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 18px) scale(.96); } }
+  @keyframes ringDraw { from { stroke-dasharray: 0 600; } }
+  @keyframes popIn { from { opacity: 0; transform: scale(.5); } }
+  @keyframes lubdub { 0%,100% { transform: scale(1); } 12% { transform: scale(1.28); } 24% { transform: scale(1); } 38% { transform: scale(1.18); } 56% { transform: scale(1); } }
+  @keyframes softPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(240,160,40,.0); } 50% { box-shadow: 0 0 0 5px rgba(240,160,40,.22); } }
+  @keyframes drift { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(24px,18px) scale(1.12); } }
+  @keyframes blink { 50% { opacity: .25; } }
+  @keyframes ecgSweep { from { stroke-dashoffset: 40; } to { stroke-dashoffset: -100; } }
+  @keyframes ecgDot { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -140; } }
+
+  .hdr { animation: fadeDown .6s cubic-bezier(.2,.7,.2,1) backwards; }
+  .glass { animation: fadeUp .6s cubic-bezier(.2,.7,.2,1) backwards; }
+  .grid > .glass:nth-child(2) { animation-delay: .07s; }
+  .grid > .glass:nth-child(3) { animation-delay: .14s; }
+  .grid > .glass:nth-child(4) { animation-delay: .21s; }
+  .grid > .glass:nth-child(n+5) { animation-delay: .28s; }
+  .rise { animation: fadeUp .7s cubic-bezier(.2,.7,.2,1) backwards; animation-delay: var(--d, 0s); }
+  button.glass { transition: transform .2s ease, border-color .2s ease; }
+  button.glass:hover { transform: translateY(-3px); }
+  button { transition: transform .15s ease, background-color .2s ease, border-color .2s ease, opacity .2s ease; }
+  button:not(:disabled):active { transform: scale(.97); }
+  .btn-grad { background-size: 170% 170%; background-position: 0% 50%; transition: background-position .6s ease, opacity .2s ease, transform .15s ease; }
+  .btn-grad:not(:disabled):hover { background-position: 100% 50%; }
+  .toast-in { animation: toastIn .4s cubic-bezier(.2,.9,.3,1.2) backwards; }
+  .ring-arc { animation: ringDraw 1.5s cubic-bezier(.3,.7,.2,1) backwards; }
+  .ring-dot, .ring-num { transform-box: fill-box; transform-origin: center; animation: popIn .6s cubic-bezier(.3,1.4,.4,1) backwards; }
+  .ring-num { animation-delay: .5s; }
+  .ring-dot:nth-of-type(n) { animation-delay: .9s; }
+  .logo-dot { transform-box: fill-box; transform-origin: center; animation: lubdub 1.6s ease-in-out infinite; }
+  .pulse-soft { animation: softPulse 2.2s ease-in-out infinite; }
+  .blob { position: absolute; width: 260px; height: 260px; border-radius: 50%; filter: blur(70px); opacity: .28; background: var(--grad); animation: drift 14s ease-in-out infinite; pointer-events: none; }
+
+  /* heart monitor */
+  .monitor { background-color: #0E0A14; background-image: linear-gradient(rgba(120,255,180,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(120,255,180,.07) 1px, transparent 1px); background-size: 20px 20px; border: 1px solid var(--line); box-shadow: 0 12px 40px rgba(138,53,174,.18); }
+  .ecg-line { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+  .ecg-ghost { stroke-width: 1.5; opacity: .16; }
+  .ecg-trace { stroke-width: 2.4; stroke-dasharray: 40 100; animation: ecgSweep 5s linear infinite; }
+  .ecg-head { stroke: #fff; stroke-width: 7; stroke-dasharray: .01 139.99; animation: ecgDot 5s linear infinite; }
+  .beat-heart { animation: lubdub var(--bt, 1s) ease-in-out infinite; }
+  .live-dot { animation: blink 1.2s ease-in-out infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+    .ecg-trace { stroke-dasharray: none; }
+    .ecg-head, .blob { display: none; }
+  }
