@@ -8,7 +8,7 @@ import { Btn, Field, inputCls } from '../../components/ui';
 import { OrDivider, PasswordField } from './AuthParts';
 import { AuthShell } from './AuthShell';
 import { GoogleButton } from './GoogleButton';
-import { GOOGLE_CLIENT_ID, ADMIN_EMAILS } from '../../lib/config';
+import { ADMIN_EMAILS } from '../../lib/config';
 
 // Function/component: the code below runs when this function is called.
 export function SignupPage({ auth, go }) {
@@ -26,9 +26,9 @@ export function SignupPage({ auth, go }) {
     try { await auth.signup(f); } catch (ex) { setErr(ex.message); }
     setBusy(false);
   };
-  const google = async cred => {
+  const google = async () => {
     setErr('');
-    try { await auth.google(cred, 'signup', live.current.role, live.current.code); } catch (ex) { setErr(ex.message); }
+    try { await auth.google('signup', live.current.role, live.current.code); } catch (ex) { setErr(ex.message); }
   };
 
   return (
@@ -57,7 +57,7 @@ export function SignupPage({ auth, go }) {
         <PasswordField id="su-pw2" label="Confirm password" value={f.pw2} onChange={set('pw2')} autoComplete="new-password" />
         {err && <p role="alert" className="text-sm text-accent">{err}</p>}
         <Btn type="submit" disabled={busy}>{busy ? 'Creating account…' : 'Create account'}</Btn>
-        <OrDivider /><GoogleButton onCredential={google} onError={setErr} />
+        <OrDivider /><GoogleButton onClick={google} />
         <p className="text-sm text-muted text-center">Already have an account? <button type="button" onClick={() => go('login')} className="text-brand font-semibold underline">Log in</button></p>
       </form>
     </AuthShell>

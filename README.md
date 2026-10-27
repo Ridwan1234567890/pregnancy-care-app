@@ -7,15 +7,17 @@ npm run dev
 ```
 Open the address Vite prints (usually http://localhost:5173).
 
-## Turn on Continue with Google
-The button stays hidden until you add a Google Client ID. Google issues this ID to your own account, so it has to come from you:
+## Firebase (accounts and all data)
+Sign-in and every record (profiles, links, bookings, notices, the access log) live in Firebase, so all devices see the same data.
 
-1. Go to https://console.cloud.google.com and create or pick a project.
-2. APIs & Services > OAuth consent screen: set it up (External, add your email).
-3. APIs & Services > Credentials > Create credentials > OAuth client ID > Web application.
-4. Under Authorized JavaScript origins add `http://localhost:5173` (and your real domain later).
-5. Copy `.env.example` to `.env` and paste the Client ID after `VITE_GOOGLE_CLIENT_ID=`.
-6. Stop and restart `npm run dev` (Vite only reads .env at start).
+1. Copy `.env.example` to `.env` and fill in the `VITE_FIREBASE_*` values (Firebase Console > Project settings > Your apps > Web app). On Vercel, add the same variables and redeploy.
+2. Firebase Console > Authentication > Sign-in method: turn on **Email/Password** and **Google**.
+3. Authentication > Settings > Authorized domains: add your Vercel domain (localhost is already there).
+4. Build > Firestore Database: create the database.
+5. Publish the security rules: `npx firebase-tools deploy --only firestore:rules` (or paste `firestore.rules` into Firestore > Rules > Publish). Without this nobody can read or write anything.
+6. Sign in once with the admin Google account. That copies the starter doctors into Firestore so their clinic codes work for doctor sign-up.
+
+Admins must use Continue with Google. Keep `VITE_ADMIN_EMAILS` and the `adminEmails()` list in `firestore.rules` the same, because the rules are what really enforce admin access.
 
 ## Turn on online payment (Paystack)
 1. Create an account at https://paystack.com and copy your **public** key (Settings > API Keys). Use `pk_test_...` while testing.
@@ -26,11 +28,11 @@ Without a key, the pay-online option is hidden.
 Important: this version has no server, so payments are not verified server-side. Before taking real money, add a small backend that calls Paystack's verify endpoint with your **secret** key, and never put the secret key in this project.
 
 ## Admin and doctors
-Set `VITE_ADMIN_EMAILS` in `.env` (comma-separated). Anyone who signs up with one of those emails becomes Admin.
+Set `VITE_ADMIN_EMAILS` in `.env` (comma-separated) and the same list in `firestore.rules`. Those emails become Admin when they sign up with Google.
 The app starts with the 5 original doctors (see `src/lib/doctors.js`, with their clinic codes). More can be added from Admin > Doctors > Add a doctor. A clinic code is generated; give it to the doctor so they can sign up on the Doctor option.
 
 ## Data
-Accounts, bookings and notices start empty. Everything is saved in the browser (localStorage key `pregnant-care-fresh-v1`), so each browser starts clean.
+Accounts, bookings and notices start empty and are stored in Cloud Firestore (collections: accounts, doctors, doctorAccounts, users, links, appts, busy, notices, auditLog).
 
 ## Project layout
 ```

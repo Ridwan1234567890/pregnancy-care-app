@@ -5,8 +5,6 @@
 
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
-import { ADMIN_EMAILS } from './lib/config';
-import { hashPw, decodeJwt, validEmail, strongPw } from './lib/security';
 import { useStore } from './lib/store';
 import { useTracked, clearBack, goBack, useCanGoBack } from './lib/back';
 
@@ -32,7 +30,7 @@ export function PageLoader() {
 
 // Function/component: the code below runs when this function is called.
 function App() {
-  const [s, setS] = useStore();
+  const { s, setS, acct, ready, error, clearError, auth } = useStore();
   const [page, setPage] = useTracked('login');
   const canBack = useCanGoBack();
   const [toast, setToast] = useState('');
@@ -44,60 +42,13 @@ function App() {
   }, []);
   const say = m => { setToast(m); setTimeout(() => setToast(''), 4500); };
 
-  const accounts = s.accounts || {};
-  const acct = s.session ? accounts[s.session.email] : null;
   const session = acct ? { email: acct.email, role: acct.role } : null;
 
-  const noAccount = () => Object.assign(new Error('No account found for this email. Please sign up first.'), { code: 'no_account' });
   const go = p => { setPage(p); window.scrollTo(0, 0); };
-  const logout = () => { setS(p => ({ ...p, session: null })); setPage('login'); clearBack(); };
+  const logout = () => { auth.logout(); setPage('login'); clearBack(); };
   // Each login or logout starts a fresh back history.
   useEffect(() => { clearBack(); }, [session ? session.email : '']);
-
-  /* account actions */
-  const roleFor = (email, role) => (ADMIN_EMAILS.includes(email) ? 'admin' : role);
-  const doctorFromCode = code => {
-    const d = (s.doctors || []).find(x => x.code === (code || '').trim().toUpperCase());
-    if (!d) throw new Error('That clinic code does not match a doctor.');
-    if (Object.values(accounts).some(a => a.doctorId === d.id)) throw new Error('This doctor profile already has an account. Log in instead.');
-    return d;
-  };
-  const auth = {
-    async signup({ name, email, pw, role, code }) {
-      email = email.trim().toLowerCase(); name = name.trim();
-      if (!name) throw new Error('Enter your full name.');
-      if (!validEmail(email)) throw new Error('Enter a valid email address.');
-      if (!strongPw(pw)) throw new Error('Use at least 8 characters, with a letter and a number.');
-      if (accounts[email]) throw new Error('An account with this email already exists. Log in instead.');
-      const r = roleFor(email, role);
-      const d = r === 'doctor' ? doctorFromCode(code) : null;
-      const { salt, hash } = await hashPw(pw);
-      setS(p => ({ ...p, accounts: { ...(p.accounts || {}), [email]: { email, name, role: r, salt, hash, doctorId: d ? d.id : null, created: Date.now() } }, session: { email } }));
-      window.scrollTo(0, 0);
-    },
-    async login(email, pw) {
-      email = email.trim().toLowerCase();
-      const a = accounts[email];
-      if (!a) throw noAccount();
-      if (!a.hash) throw new Error('This account uses Google. Use Continue with Google.');
-      const { hash } = await hashPw(pw, a.salt);
-      if (hash !== a.hash) throw new Error('Email or password is incorrect.');
-      setS(p => ({ ...p, session: { email } }));
-      window.scrollTo(0, 0);
-    },
-    async google(credential, mode, role, code) {
-      let c;
-      try { c = decodeJwt(credential); } catch (e) { throw new Error('Google sign-in failed. Please try again.'); }
-      if (!c.email || c.email_verified === false) throw new Error('Google did not return a verified email address.');
-      const email = c.email.toLowerCase();
-      if (accounts[email]) { setS(p => ({ ...p, session: { email } })); window.scrollTo(0, 0); return; }
-      if (mode === 'login') throw noAccount();
-      const r = roleFor(email, role || 'patient');
-      const d = r === 'doctor' ? doctorFromCode(code) : null;
-      setS(p => ({ ...p, accounts: { ...(p.accounts || {}), [email]: { email, name: c.name || email.split('@')[0], role: r, provider: 'google', doctorId: d ? d.id : null, created: Date.now() } }, session: { email } }));
-      window.scrollTo(0, 0);
-    }
-  };
+  useEffect(() => { if (error) { say(error); clearError(); } }, [error]);
 
   // Each account gets its own mother profile: due date, doctor links and bookings.
   const mine = acct ? ((s.users || {})[acct.email] || {}) : {};
@@ -115,10 +66,11 @@ function App() {
           </div>
         )}
         <Suspense fallback={<PageLoader />}>
-        {!session && (page === 'signup' ? <SignupPage auth={auth} go={go} /> : <LoginPage auth={auth} go={go} />)}
-        {session && session.role === 'patient' && <PatientApp s={view} setS={setS} say={say} />}
-        {session && session.role === 'doctor' && <DoctorApp s={s} setS={setS} say={say} doctorId={acct.doctorId} />}
-        {session && session.role === 'admin' && <AdminApp s={s} setS={setS} email={session.email} />}
+        {!ready && <PageLoader />}
+        {ready && !session && (page === 'signup' ? <SignupPage auth={auth} go={go} /> : <LoginPage auth={auth} go={go} />)}
+        {ready && session && session.role === 'patient' && <PatientApp s={view} setS={setS} say={say} />}
+        {ready && session && session.role === 'doctor' && <DoctorApp s={s} setS={setS} say={say} doctorId={acct.doctorId} />}
+        {ready && session && session.role === 'admin' && <AdminApp s={s} setS={setS} email={session.email} />}
       </Suspense>
       </main>
       {toast && (

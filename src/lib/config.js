@@ -3,11 +3,7 @@
  * Learning note: imports reuse code from other modules; exports make code available to other files.
  */
 
-// Set VITE_GOOGLE_CLIENT_ID in the .env file (see README.md). While it is empty, the Google button is hidden.
-// GOOGLE_CLIENT_ID: named value used by the code below.
-export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-
-// Admin access is decided in the browser here. A real build checks the role on the server.
+// Admin emails: must match the list in firestore.rules, which is what actually enforces admin access (and requires Google sign-in).
 // ADMIN_EMAILS: named value used by the code below.
 export const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || 'aremuridwanullah@gmail.com').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 

@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Keep this list in step with VITE_ADMIN_EMAILS.
+    function adminEmails() { return ['aremuridwanullah@gmail.com']; }
+
+    function signedIn() { return request.auth != null && request.auth.token.email != null; }
+    function me() { return request.auth.token.email.lower(); }
+    function acctPath() { return /databases/$(database)/documents/accounts/$(me()); }
+    function role() { return exists(acctPath()) ? get(acctPath()).data.role : ''; }
+    function isAdmin() { return signedIn() && role() == 'admin'; }
+    function isDoctor() { return signedIn() && role() == 'doctor'; }
+    function myDoctorId() { return get(acctPath()).data.doctorId; }
+    function viaGoogle() { return request.auth.token.firebase.sign_in_provider == 'google.com'; }
+
+    // One account per signed-in email. Admin needs a verified Google sign-in; a doctor needs the clinic code.
+    match /accounts/{email} {
+      allow read: if signedIn() && (me() == email || isAdmin());
+      allow create: if signedIn() && me() == email
+        && request.resource.data.email == email
+        && request.resource.data.keys().hasOnly(['email', 'name', 'role', 'doctorId', 'provider', 'created'])
+        && (
+          request.resource.data.role == 'patient'
+          || (request.resource.data.role == 'admin' && email in adminEmails() && viaGoogle())
+          || (request.resource.data.role == 'doctor'
+              && getAfter(/databases/$(database)/documents/doctorAccounts/$(request.resource.data.doctorId)).data.email == email)
+        );
+    }
+
+    // Claims a doctor profile. Created once only, and only with the right clinic code.
+    match /doctorAccounts/{doctorId} {
+      allow read: if isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.email == me()
+        && request.resource.data.code == get(/databases/$(database)/documents/doctors/$(doctorId)).data.code;
+    }
+
+    match /doctors/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // A mother's profile. Doctors can read profiles so they see names, not IDs.
+    match /users/{email} {
+      allow read: if signedIn() && (me() == email || isAdmin() || isDoctor());
+      allow create, update: if signedIn() && me() == email;
+    }
+
+    match /links/{id} {
+      allow read: if signedIn() && (resource.data.patientId == me() || isAdmin()
+        || (isDoctor() && resource.data.doctorId == myDoctorId()));
+      allow create: if signedIn() && request.resource.data.patientId == me();
+      allow update: if signedIn() && (
+        (resource.data.patientId == me() && request.resource.data.patientId == me())
+        || (isDoctor() && resource.data.doctorId == myDoctorId() && request.resource.data.doctorId == resource.data.doctorId));
+      allow delete: if signedIn() && (resource.data.patientId == me() || isAdmin());
+    }
+
+    match /appts/{id} {
+      allow read: if signedIn() && (resource.data.patientId == me() || isAdmin()
+        || (isDoctor() && resource.data.doctorId == myDoctorId()));
+      allow create: if signedIn() && request.resource.data.patientId == me();
+      allow update: if signedIn() && (
+        (resource.data.patientId == me() && request.resource.data.patientId == me())
+        || (isDoctor() && resource.data.doctorId == myDoctorId() && request.resource.data.doctorId == resource.data.doctorId));
+      allow delete: if signedIn() && (resource.data.patientId == me() || isAdmin());
+    }
+
+    // "This slot is taken" markers, so mothers can see availability without seeing who booked.
+    match /busy/{id} {
+      allow read: if signedIn();
+      allow create, update, delete: if signedIn()
+        && (request.method == 'delete' || request.resource.data.keys().hasOnly(['doctorId', 'date', 'time']));
+    }
+
+    match /notices/{id} {
+      allow read, update: if isAdmin();
+      allow create: if signedIn();
+    }
+
+    match /auditLog/{id} {
+      allow read, create: if isAdmin();
+    }
+  }
+}
