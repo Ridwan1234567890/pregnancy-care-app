@@ -102,8 +102,8 @@ export function Booking({ doc, s, setS, say, linked, onBack, onDone }) {
         {!paymentsEnabled && <p className="mt-4 text-xs text-muted">Pay the visit fee at the clinic.</p>}
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <Btn disabled={!time || paying} onClick={confirm}>{paying ? 'Waiting for payment…' : mode === 'online' ? `Pay ${naira(doc.fee)} and ${linked ? 'book' : 'request'}` : linked ? 'Confirm booking' : 'Request booking'}</Btn>
-          <p className="text-sm text-muted">{linked ? 'Your own doctor confirms automatically.' : 'New patients need the doctor’s approval.'}</p>
+          <Btn disabled={!time || paying} onClick={confirm}>{paying ? 'Waiting for payment…' : !time ? 'Choose a time' : mode === 'online' ? `Pay ${naira(doc.fee)} and ${linked ? 'book' : 'request'}` : linked ? 'Confirm booking' : 'Request booking'}</Btn>
+          <p className="text-sm text-muted">{!time ? 'Select an available time above to continue.' : linked ? 'Your own doctor confirms automatically.' : 'New patients need the doctor’s approval.'}</p>
         </div>
       </Card>
     </div>
