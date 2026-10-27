@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
 import { auth, db } from './firebaseClient';
 import { DOCTORS } from './doctors';
@@ -110,10 +110,9 @@ const authApi = {
     if (!name) throw new Error('Enter your full name.');
     if (!validEmail(email)) throw new Error('Enter a valid email address.');
     if (!strongPw(pw)) throw new Error('Use at least 8 characters, with a letter and a number.');
-    if (ADMIN_EMAILS.includes(email)) throw new Error('Admin accounts must sign in with Google. Use Continue with Google.');
     let cred;
     try { cred = await createUserWithEmailAndPassword(auth, email, pw); } catch (e) { throw authError(e); }
-    try { await createAccount(email, { name, role, code, provider: 'password' }); }
+    try { await createAccount(email, { name, role: ADMIN_EMAILS.includes(email) ? 'admin' : role, code, provider: 'password' }); }
     catch (e) { await discard(cred.user); throw authError(e); }
     window.scrollTo(0, 0);
   },
@@ -123,18 +122,6 @@ const authApi = {
     try { cred = await signInWithEmailAndPassword(auth, email, pw); } catch (e) { throw authError(e); }
     const a = await getDoc(doc(db, 'accounts', email));
     if (!a.exists()) { await signOut(auth); throw noAccount(); }
-    window.scrollTo(0, 0);
-  },
-  async google(mode, role, code) {
-    let cred;
-    try { cred = await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { throw authError(e); }
-    const email = (cred.user.email || '').toLowerCase();
-    const a = await getDoc(doc(db, 'accounts', email));
-    if (a.exists()) { window.scrollTo(0, 0); return; }
-    if (mode === 'login') { await discard(cred.user); throw noAccount(); }
-    const r = ADMIN_EMAILS.includes(email) ? 'admin' : (role || 'patient');
-    try { await createAccount(email, { name: cred.user.displayName || email.split('@')[0], role: r, code, provider: 'google' }); }
-    catch (e) { await discard(cred.user); throw authError(e); }
     window.scrollTo(0, 0);
   },
   logout: () => signOut(auth)

@@ -12,9 +12,8 @@ service cloud.firestore {
     function isAdmin() { return signedIn() && role() == 'admin'; }
     function isDoctor() { return signedIn() && role() == 'doctor'; }
     function myDoctorId() { return get(acctPath()).data.doctorId; }
-    function viaGoogle() { return request.auth.token.firebase.sign_in_provider == 'google.com'; }
 
-    // One account per signed-in email. Admin needs a verified Google sign-in; a doctor needs the clinic code.
+    // One account per signed-in email. Admin must use an email listed in adminEmails(); a doctor needs the clinic code.
     match /accounts/{email} {
       allow read: if signedIn() && (me() == email || isAdmin());
       allow create: if signedIn() && me() == email
@@ -22,7 +21,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['email', 'name', 'role', 'doctorId', 'provider', 'created'])
         && (
           request.resource.data.role == 'patient'
-          || (request.resource.data.role == 'admin' && email in adminEmails() && viaGoogle())
+          || (request.resource.data.role == 'admin' && email in adminEmails())
           || (request.resource.data.role == 'doctor'
               && getAfter(/databases/$(database)/documents/doctorAccounts/$(request.resource.data.doctorId)).data.email == email)
         );

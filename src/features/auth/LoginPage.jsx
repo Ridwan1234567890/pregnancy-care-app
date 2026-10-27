@@ -5,9 +5,8 @@
 
 import { useState } from 'react';
 import { Btn, Field, inputCls } from '../../components/ui';
-import { OrDivider, PasswordField } from './AuthParts';
+import { PasswordField } from './AuthParts';
 import { AuthShell } from './AuthShell';
-import { GoogleButton } from './GoogleButton';
 import { pregnancy } from '../../lib/pregnancy';
 
 // Function/component: the code below runs when this function is called.
@@ -26,7 +25,6 @@ export function LoginPage({ auth, go }) {
     try { await auth.login(email, pw); } catch (ex) { fail(ex); }
     setBusy(false);
   };
-  const google = async () => { setErr(''); setNeedSignup(false); try { await auth.google('login'); } catch (ex) { fail(ex); } };
 
   return (
     <AuthShell eyebrow="Welcome back" title="Pick up where your last visit left off." blurb="Log in to see your pregnancy week, upcoming appointments and visit notes.">
@@ -36,7 +34,6 @@ export function LoginPage({ auth, go }) {
         <PasswordField id="login-pw" label="Password" value={pw} onChange={e => setPw(e.target.value)} autoComplete="current-password" />
         {err && <p role="alert" className="text-sm text-accent">{err}{needSignup && <> <button type="button" onClick={() => go('signup')} className="font-semibold underline">Sign up now</button></>}</p>}
         <Btn type="submit" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</Btn>
-        <OrDivider /><GoogleButton onClick={google} />
         <p className="text-sm text-muted text-center">New here? <button type="button" onClick={() => go('signup')} className="text-brand font-semibold underline">Create an account</button></p>
       </form>
     </AuthShell>
