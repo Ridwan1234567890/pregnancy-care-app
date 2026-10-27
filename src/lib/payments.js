@@ -106,6 +106,12 @@ export async function payWithPaystack({
   handler.openIframe();
 }
 
+// Older records saved the whole Paystack response ({ reference }) instead of the reference string.
+export const payRef = payment => {
+  const r = payment && payment.ref;
+  return r && typeof r === 'object' ? r.reference || '' : r || '';
+};
+
 export const creditFor = (state, patientId, doctorId) =>
   (state.payments || []).find(
     (payment) =>

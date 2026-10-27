@@ -9,6 +9,7 @@ import { LinkDoctor } from './LinkDoctor';
 import { fmtDate, fmtTime, apptStart } from '../../lib/format';
 import { pregnancy, MILESTONES } from '../../lib/pregnancy';
 import { addNotice } from '../../lib/store';
+import { payRef } from '../../lib/payments';
 
 // Function/component: the code below runs when this function is called.
 export function PatientHome({ s, setS, say, primaryId, pendingLink, goFind }) {
@@ -19,7 +20,7 @@ export function PatientHome({ s, setS, say, primaryId, pendingLink, goFind }) {
   const cancel = a => {
     if (apptStart(a) - new Date() < 12 * 36e5) return say('Cancellations need 12 hours’ notice. Please call the clinic.');
     setS(x => addNotice({ ...x, appts: x.appts.map(y => (y.id === a.id ? { ...y, status: 'cancelled' } : y)) },
-      { type: 'cancel', text: `${me.name} cancelled the visit with ${(s.doctors || []).find(d => d.id === a.doctorId).name} on ${fmtDate(a.date)}, ${fmtTime(a.time)}${a.payment ? ` (paid online, ref ${a.payment.ref}: refund needed)` : ''}` }));
+      { type: 'cancel', text: `${me.name} cancelled the visit with ${(s.doctors || []).find(d => d.id === a.doctorId).name} on ${fmtDate(a.date)}, ${fmtTime(a.time)}${a.payment ? ` (paid online, ref ${payRef(a.payment)}: refund needed)` : ''}` }));
     say(a.payment ? 'Appointment cancelled. The clinic will arrange your refund.' : 'Appointment cancelled.');
   };
 

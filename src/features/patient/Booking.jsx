@@ -42,7 +42,7 @@ export function Booking({ doc, s, setS, say, linked, onBack, onDone }) {
     try {
       await payWithPaystack({
         email: s.session.email, amountNaira: doc.fee,
-        onSuccess: ref => { setPaying(false); book({ ref, amount: doc.fee, at: Date.now(), provider: 'paystack' }); },
+        onSuccess: r => { setPaying(false); book({ ref: r.reference, amount: doc.fee, at: Date.now(), provider: 'paystack' }); },
         onClose: () => { setPaying(false); say('Payment cancelled. Your slot is not booked yet.'); }
       });
     } catch (ex) { setPaying(false); say(ex.message); }

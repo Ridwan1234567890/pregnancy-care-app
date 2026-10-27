@@ -11,6 +11,7 @@ import { AdminPatients } from './AdminPatients';
 import { allPatients, docName } from './shared';
 import { fmtDate, fmtTime, apptStart, naira } from '../../lib/format';
 import { nameOf } from '../../lib/lookups';
+import { payRef } from '../../lib/payments';
 
 // noticeLabel: named value used by the code below.
 export const noticeLabel = { booking: ['New booking', 'ok'], next: ['Next visit', 'soft'], cancel: ['Cancelled', 'accent'], link: ['Link request', 'warn'] };
@@ -86,7 +87,7 @@ export function AdminApp({ s, setS, email }) {
                     <td className="py-2.5 pr-3">{docName(s, a.doctorId)}</td>
                     <td className="py-2.5 pr-3 tabular-nums whitespace-nowrap">{fmtDate(a.date)}, {fmtTime(a.time)}</td>
                     <td className="py-2.5 pr-3">{statusPill(a.status)}</td>
-                    <td className="py-2.5 text-xs">{a.payment ? <>{payPill(a)}<span className="block text-muted mt-1 tabular-nums">{naira(a.payment.amount)} · {a.payment.ref}</span></> : <span className="text-muted">At clinic</span>}</td>
+                    <td className="py-2.5 text-xs">{a.payment ? <>{payPill(a)}<span className="block text-muted mt-1 tabular-nums">{naira(a.payment.amount)} · {payRef(a.payment)}</span></> : <span className="text-muted">At clinic</span>}</td>
                   </tr>
                 ))}
               </tbody>
