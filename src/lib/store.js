@@ -162,7 +162,7 @@ export function useStore() {
   const role = acct ? acct.role : null;
   const doctorId = acct ? acct.doctorId : null;
   useEffect(() => {
-    if (!role) return;
+    if (!role || !email) return; // email is null for a render after logout while role is still stale
     const put = (key, val) => setData(d => ({ ...d, [key]: val }));
     const subs = [];
     const watch = (ref, fn) => subs.push(onSnapshot(ref, fn, fail));
